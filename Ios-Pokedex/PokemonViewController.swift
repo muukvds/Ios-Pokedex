@@ -15,92 +15,141 @@ class PokemonViewController: UIViewController {
     
     @IBOutlet weak var nameLabel: UILabel!
     
+    @IBOutlet weak var catchButton: UIButton!
+    
+    @IBOutlet weak var pokemonImage: UIImageView!
+    
+    @IBOutlet weak var weightDataLabel: UILabel!
+    
+    @IBOutlet weak var heightDataLabel: UILabel!
+    
+    @IBOutlet weak var typeDataLabel: UILabel!
+    
+    @IBOutlet weak var genusDataLabel: UILabel!
+    
+    @IBOutlet weak var flavorTextDataLabel: UILabel!
     
     
     
     
     
+    @IBAction func catchPokemon(_ sender: UIButton) {
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        
+            var pokemons = self!.getCoughtPokemons() ?? [Pokemon]()
+            
+            if let p = self!.pokemon {
+                pokemons.append(p)
+                self!.saveCaughtPokemons(of: pokemons)
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now()) {
+                Toast.show(message: "\(self!.pokemon?.name ?? "") catched", controller: self!)
+            }
+        }
+    }
     
-    
+ 
     
     override func viewDidLoad() {
         super.viewDidLoad()
         if let p = pokemon {
-            nameLabel.text = p.name
-        }
-        if pokemon != nil {
-             loadPokemon()
-        }
-       
-        // Do any additional setup after loading the view.
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    private func dataDidLoad(){
-        if let p = pokemon {
-            nameLabel.text = p.name
-        }
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-    private func loadPokemon(){
-        
-        URLSession.shared.dataTask(with: (pokemon?.apiUrl!)!, completionHandler: {(data, response, error) in
-            guard let data = data, error == nil else {print(error!); return}
-            
-            let json = try? JSONSerialization.jsonObject(with: data, options: [])
-            
-            if let dictionary = json as? [String: Any] {
-                
-                let id:Int
-                let name:String
-                let imageUrl:String
-                
-                if let jsonId = dictionary["id"] as? Int {
-                    id = jsonId
-                    if let jsonName = dictionary["name"] as? String {
-                        name = jsonName
-                        if let sprites = dictionary["sprites"] as? [String:Any] {
-                            if let jsonImageUrl = sprites["front_default"] as? String {
-                                imageUrl = jsonImageUrl
-                                DispatchQueue.main.async {
-                                  self.dataDidLoad()
-                                }
-                            }
-                        }
-                    }
+            if let image = p.imageFront {
+                 pokemonImage.image = UIImage(data: image)
+            }
+            nameLabel.text = p.name?.uppercased()
+            var weight = String(format:"%.1f", p.weight ?? 0.0)
+            weight += "kg"
+            weightDataLabel.text = weight
+            var height = String(format:"%.1f",p.height ?? 0.0)
+            height += "m"
+            heightDataLabel.text = height
+            var typeString = ""
+            var first = true
+            for type in p.types {
+                if first {
+                    typeString = type
+                    first = false
+                }
+                else {
+                    typeString += "/\(type)"
                 }
             }
-            
-        }).resume()
+            typeDataLabel.text = typeString.uppercased()
+            genusDataLabel.text = p.genera?.uppercased()
+            flavorTextDataLabel.text = p.flavorText
+        }
     }
+    
+    
+    
+    private func saveCaughtPokemons(of pokemons:[Pokemon])
+    {
+        if let JsonDataPokemons = arrayToJSONData(from: pokemons) {
+            
+            let itemName = "pokemonsJson"
+            do {
+                let directory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+                let fileURL = directory.appendingPathComponent(itemName)
+                
+                try JsonDataPokemons.write(to: fileURL, options: .atomic)
+                
+                UserDefaults.standard.set(fileURL, forKey: "pathForJSON")
+                print(UserDefaults.standard.integer(forKey: "jsonVersion"))
+                UserDefaults.standard.set(((UserDefaults.standard.integer(forKey: "jsonVersion")) + 1), forKey: "jsonVersion")
+                print(UserDefaults.standard.integer(forKey: "jsonVersion"))
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
+    private func arrayToJSONData(from array: [Pokemon]) -> Data? {
+        
+        do {
+            let jsonEncoder = JSONEncoder()
+            let jsonData = try jsonEncoder.encode(array)
+            
+            return jsonData
+        }
+        catch {
+            print(error)
+        }
+        return nil
+    }
+    
+    private func JSONToArray(from JSONData: Data) -> [Pokemon]? {
+        
+        let decoder = JSONDecoder()
+        do {
+            if let array = try decoder.decode([Pokemon]?.self, from: JSONData) {
+                return array
+            }
+        }
+        catch {
+            print(error)
+        }
+        return nil
+    }
+    
+    private func getCoughtPokemons() -> [Pokemon]? {
+        
+        let fileUrl = UserDefaults.standard.url(forKey: "pathForJSON")
+        do {
+            if (fileUrl != nil) {
+                let jsonPokemonData = try Data(contentsOf: fileUrl!, options: [])
+                
+                return JSONToArray(from: jsonPokemonData)
+            }
+        } catch {
+            print(error)
+        }
+        return nil
+    }
+    
+    
+    
     
     /*
     // MARK: - Navigation

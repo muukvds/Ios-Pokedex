@@ -13,16 +13,22 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
     var pokemons = [Pokemon]()
     
     var offset = 0
-    var limit = 150
-    var steps = 150
+    var limit = 50
+    var steps = 50
+    var startFetshingBeforEnd = 15
     
     var isFetshingPokemon = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
-  
+        
+        let text = "There is a bud on this Pokémon’s back. To support its weight,\nIvysaur’s legs and trunk grow thick and strong.\nIf it starts spending more time lying in the sunlight,\nit’s a sign that the bud will bloom into a large flower soon."
+        let test = String(text.filter { !"\n".contains($0) })
+        print(test)
+        
         fetchPokemons()
     }
+    
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -51,9 +57,9 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
             let cell = tableView.dequeueReusableCell(withIdentifier: "pokemonCell", for: indexPath)
-        
+  
             cell.textLabel?.text = pokemons[indexPath.row].name
-            if let imageData = pokemons[indexPath.row].image {
+            if let imageData = pokemons[indexPath.row].imageFront {
                 cell.imageView?.image = UIImage(data: imageData)
             }
             return cell
@@ -61,7 +67,7 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
     
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        let lastElement = pokemons.count - 1
+        let lastElement = pokemons.count - startFetshingBeforEnd
         if indexPath.row == lastElement {
             if !isFetshingPokemon {
                 fetchPokemons()
@@ -91,7 +97,7 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
         isFetshingPokemon = true
         tableView.reloadSections(IndexSet(integer: 1), with: .none)
         DispatchQueue.global(qos: .userInitiated).async {
-            var pokemonURls = [URL?]()
+            var pokemonURls = [URL]()
             
             let url = URL(string: "https://pokeapi.co/api/v2/pokemon?offset=\(self.offset)&limit=\(self.limit)")
             
@@ -104,9 +110,10 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
                     if let results = dictionary["results"] as? [Any] {
                         for pokemons in results {
                             if let pokemon = pokemons as? [String:Any]{
-                                if let pokemonUrl = pokemon["url"] as? String {
-                                    let nurl = URL(string: pokemonUrl)
-                                    pokemonURls.append(nurl)
+                                if let pokemonUrlString = pokemon["url"] as? String {
+                                   if let pokemonURL = URL(string: pokemonUrlString) {
+                                        pokemonURls.append(pokemonURL)
+                                    }
                                 }
                             }
                         }
@@ -115,7 +122,7 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
                 
                 for pokemonUrl in pokemonURls {
                     
-                    URLSession.shared.dataTask(with: pokemonUrl!, completionHandler: {(data, response, error) in
+                    URLSession.shared.dataTask(with: pokemonUrl, completionHandler: {(data, response, error) in
                         guard let data = data, error == nil else {print(error!); return}
                         
                         let json = try? JSONSerialization.jsonObject(with: data, options: [])
@@ -134,8 +141,8 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
                                         if let jsonImageUrl = sprites["front_default"] as? String {
                                             imageUrl = jsonImageUrl
                                             self.pokemons.append(Pokemon(withId: id, withName: name, withImageUrl: imageUrl,withApiUrl: pokemonUrl))
-                                            
                                             DispatchQueue.main.async {
+                                                self.pokemons.sort {$0.id < $1.id}
                                                 self.tableView.reloadData()
                                             }
                                         }
@@ -143,7 +150,6 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
                                 }
                             }
                         }
-                        
                     }).resume()
                 }
                 self.isFetshingPokemon = false
