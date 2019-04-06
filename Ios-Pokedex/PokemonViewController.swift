@@ -29,28 +29,23 @@ class PokemonViewController: UIViewController {
     
     @IBOutlet weak var flavorTextDataLabel: UILabel!
     
-    
-    
-    
-    
     @IBAction func catchPokemon(_ sender: UIButton) {
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
         
-            var pokemons = self!.getCoughtPokemons() ?? [Pokemon]()
+            var pokemons = self?.getCoughtPokemons() ?? [Pokemon]()
             
-            if let p = self!.pokemon {
+            if let p = self?.pokemon {
+                p.localId = UUID().uuidString
                 pokemons.append(p)
-                self!.saveCaughtPokemons(of: pokemons)
+                self?.saveCaughtPokemons(of: pokemons)
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now()) {
-                Toast.show(message: "\(self!.pokemon?.name ?? "") catched", controller: self!)
+            DispatchQueue.main.async {
+                Toast.show(message: "\(self?.pokemon?.name ?? "") catched", controller: self!)
             }
         }
     }
-    
- 
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -96,9 +91,7 @@ class PokemonViewController: UIViewController {
                 try JsonDataPokemons.write(to: fileURL, options: .atomic)
                 
                 UserDefaults.standard.set(fileURL, forKey: "pathForJSON")
-                print(UserDefaults.standard.integer(forKey: "jsonVersion"))
                 UserDefaults.standard.set(((UserDefaults.standard.integer(forKey: "jsonVersion")) + 1), forKey: "jsonVersion")
-                print(UserDefaults.standard.integer(forKey: "jsonVersion"))
             } catch {
                 print(error)
             }
@@ -137,8 +130,8 @@ class PokemonViewController: UIViewController {
         
         let fileUrl = UserDefaults.standard.url(forKey: "pathForJSON")
         do {
-            if (fileUrl != nil) {
-                let jsonPokemonData = try Data(contentsOf: fileUrl!, options: [])
+            if let url = fileUrl {
+                let jsonPokemonData = try Data(contentsOf: url, options: [])
                 
                 return JSONToArray(from: jsonPokemonData)
             }

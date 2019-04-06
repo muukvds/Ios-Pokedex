@@ -21,11 +21,6 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let text = "There is a bud on this Pokémon’s back. To support its weight,\nIvysaur’s legs and trunk grow thick and strong.\nIf it starts spending more time lying in the sunlight,\nit’s a sign that the bud will bloom into a large flower soon."
-        let test = String(text.filter { !"\n".contains($0) })
-        print(test)
-        
         fetchPokemons()
     }
     
@@ -99,66 +94,63 @@ class PokemonListTableViewController: UITableViewController, UISplitViewControll
         DispatchQueue.global(qos: .userInitiated).async {
             var pokemonURls = [URL]()
             
-            let url = URL(string: "https://pokeapi.co/api/v2/pokemon?offset=\(self.offset)&limit=\(self.limit)")
-            
-            URLSession.shared.dataTask(with: url!, completionHandler: {(data, response, error) in
-                guard let data = data, error == nil else {print(error!); return}
-                
-                let json = try? JSONSerialization.jsonObject(with: data, options: [])
-                
-                if let dictionary = json as? [String: Any] {
-                    if let results = dictionary["results"] as? [Any] {
-                        for pokemons in results {
-                            if let pokemon = pokemons as? [String:Any]{
-                                if let pokemonUrlString = pokemon["url"] as? String {
-                                   if let pokemonURL = URL(string: pokemonUrlString) {
-                                        pokemonURls.append(pokemonURL)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                for pokemonUrl in pokemonURls {
+           if let url = URL(string: "https://pokeapi.co/api/v2/pokemon?offset=\(self.offset)&limit=\(self.limit)") {
+                URLSession.shared.dataTask(with: url, completionHandler: {(data, response, error) in
+                    guard let data = data, error == nil else {print(error!); return}
                     
-                    URLSession.shared.dataTask(with: pokemonUrl, completionHandler: {(data, response, error) in
-                        guard let data = data, error == nil else {print(error!); return}
-                        
-                        let json = try? JSONSerialization.jsonObject(with: data, options: [])
-                        
-                        if let dictionary = json as? [String: Any] {
-                            
-                            let id:Int
-                            let name:String
-                            let imageUrl:String
-                            
-                            if let jsonId = dictionary["id"] as? Int {
-                                id = jsonId
-                                if let jsonName = dictionary["name"] as? String {
-                                    name = jsonName
-                                    if let sprites = dictionary["sprites"] as? [String:Any] {
-                                        if let jsonImageUrl = sprites["front_default"] as? String {
-                                            imageUrl = jsonImageUrl
-                                            self.pokemons.append(Pokemon(withId: id, withName: name, withImageUrl: imageUrl,withApiUrl: pokemonUrl))
-                                            DispatchQueue.main.async {
-                                                self.pokemons.sort {$0.id < $1.id}
-                                                self.tableView.reloadData()
-                                            }
+                    let json = try? JSONSerialization.jsonObject(with: data, options: [])
+                    
+                    if let dictionary = json as? [String: Any] {
+                        if let results = dictionary["results"] as? [Any] {
+                            for pokemons in results {
+                                if let pokemon = pokemons as? [String:Any]{
+                                    if let pokemonUrlString = pokemon["url"] as? String {
+                                       if let pokemonURL = URL(string: pokemonUrlString) {
+                                            pokemonURls.append(pokemonURL)
                                         }
                                     }
                                 }
                             }
                         }
-                    }).resume()
-                }
-                self.isFetshingPokemon = false
-                self.offset += self.steps
-                
-            }).resume()
+                    }
+                    
+                    for pokemonUrl in pokemonURls {
+                        
+                        URLSession.shared.dataTask(with: pokemonUrl, completionHandler: {(data, response, error) in
+                            guard let data = data, error == nil else {print(error!); return}
+                            
+                            let json = try? JSONSerialization.jsonObject(with: data, options: [])
+                            
+                            if let dictionary = json as? [String: Any] {
+                                
+                                let id:Int
+                                let name:String
+                                let imageUrl:String
+                                
+                                if let jsonId = dictionary["id"] as? Int {
+                                    id = jsonId
+                                    if let jsonName = dictionary["name"] as? String {
+                                        name = jsonName
+                                        if let sprites = dictionary["sprites"] as? [String:Any] {
+                                            if let jsonImageUrl = sprites["front_default"] as? String {
+                                                imageUrl = jsonImageUrl
+                                                self.pokemons.append(Pokemon(withId: id, withName: name, withImageUrl: imageUrl,withApiUrl: pokemonUrl))
+                                                DispatchQueue.main.async {
+                                                    self.pokemons.sort {$0.id < $1.id}
+                                                    self.tableView.reloadData()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }).resume()
+                    }
+                    self.isFetshingPokemon = false
+                    self.offset += self.steps
+                    
+                }).resume()
+            }
         }
     }
-
-    
-
 }

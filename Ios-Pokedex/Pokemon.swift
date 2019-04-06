@@ -9,19 +9,19 @@
 import Foundation
 
 class Pokemon: Codable {
-    var localId: Int?
+    var localId: String?
     var id: Int
     var name: String?
     var nickname: String?
     var imageFront: Data?
-//    var imageBack: Data?
+    var imageBack: Data?
     var imageUrlFront: String?
     var imageUrlBack: String?
     var height: Double?
     var weight: Double?
     var types: [String]
     var genera: String?
-    var flavorText: String? //[21]
+    var flavorText: String?
     var evolvesTo: Pokemon?
     var evolvedFrom: Pokemon?
     
@@ -45,7 +45,7 @@ class Pokemon: Codable {
         getPokemonDetails()
     }
     
-    init(withLocalId localId:Int, withId id:Int, withName name:String,withNickname nickname:String, withImageUrl imageUrl:String, withApiUrl apiUrl: URL ) {
+    init(withLocalId localId:String, withId id:Int, withName name:String,withNickname nickname:String, withImageUrl imageUrl:String, withApiUrl apiUrl: URL ) {
         self.localId = localId
         self.id = id
         self.name = name
@@ -140,27 +140,11 @@ class Pokemon: Codable {
                                             self.genera = generaEntry["genus"] as? String
                                         }
                                     }
-                                    
-                                    
-//                                    URLSession.shared.dataTask(with: apiUrl, completionHandler: {(data, response, error) in
-//
-//                                        guard let data = data, error == nil else {print(error!); return}
-//
-//                                        let json = try? JSONSerialization.jsonObject(with: data, options: [])
-//
-//                                        if let dictionary = json as? [String: Any] {
-//
-//                                        }
-//                                    }).resume()
                                 }
                             }).resume()
                         }
                     }
                 }
-                
-                
-                
-                
             }
             self.isLoading = false
         }).resume()

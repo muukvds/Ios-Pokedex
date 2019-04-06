@@ -10,21 +10,14 @@ import UIKit
 
 class CaughtPokemonListTableViewController: UITableViewController, UISplitViewControllerDelegate {
 
-    var pokemons: [Pokemon]?
-    {
-        didSet{
-            tableView.reloadData()
-        }
-    }
+    private var pokemons: [Pokemon]? { didSet { tableView.reloadData() }}
     
-    var jsonVersion = UserDefaults.standard.integer(forKey: "jsonVersion")
+    private var jsonVersion = UserDefaults.standard.integer(forKey: "jsonVersion")
 
     
     @IBAction func refreshTabel(_ sender: UIBarButtonItem) {
         tableView.reloadData()
     }
-    
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,7 +30,6 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
     }
 
     // MARK: - Table view data source
-    
     
     func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController: UIViewController, onto primaryViewController: UIViewController) -> Bool {
         return true
@@ -54,7 +46,6 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
         return pokemons?.count ?? 0
     }
 
-    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CaughtPokemonCell", for: indexPath)
         if pokemons != nil
@@ -65,25 +56,20 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
                 cell.imageView?.image = UIImage(data: imageData)
             }
         }
-        // Configure the cell...
-
         return cell
     }
  
-    
-    
-    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "CaughtPokemonSelector" {
             if let pokemonIndex = tableView.indexPathForSelectedRow{
                 if let cpvc = segue.destination as? CaughtPokemonViewController
                 {
                     cpvc.pokemon = pokemons?[pokemonIndex.row]
+                    cpvc.cplvc = self
                 }
             }
         }
     }
-    
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         if jsonVersion < UserDefaults.standard.integer(forKey: "jsonVersion") {
@@ -92,43 +78,41 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
         }
     }
     
-
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
-    }
-    */
-
-    
-    // Override to support editing the table view.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            
-            // Delete the row from the data source
             pokemons?.remove(at: indexPath.row)
-            saveCaughtPokemons(of: pokemons!)
+            saveCaughtPokemons()
         }
     }
     
+    public func releasePokemon (_ pokemon: Pokemon){
+        pokemons?.removeAll{$0.localId == pokemon.localId}
+        saveCaughtPokemons()
+        tableView.reloadData()
+    }
     
+    public func pokemonChanged(){
+        saveCaughtPokemons()
+        tableView.reloadData()
+    }
     
-    private func saveCaughtPokemons(of pokemons:[Pokemon])
+    public func saveCaughtPokemons()
     {
-        if let JsonDataPokemons = arrayToJSONData(from: pokemons) {
-            
-            let itemName = "pokemonsJson"
-            do {
-                let directory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-                let fileURL = directory.appendingPathComponent(itemName)
+        if let pokemons = self.pokemons {
+            if let JsonDataPokemons = arrayToJSONData(from: pokemons) {
                 
-                try JsonDataPokemons.write(to: fileURL, options: .atomic)
-                UserDefaults.standard.set(fileURL, forKey: "pathForJSON")
-                UserDefaults.standard.set((( UserDefaults.standard.integer(forKey: "jsonVersion")) + 1), forKey: "jsonVersion")
-                
-            } catch {
-                print(error)
+                let itemName = "pokemonsJson"
+                do {
+                    let directory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+                    let fileURL = directory.appendingPathComponent(itemName)
+                    
+                    try JsonDataPokemons.write(to: fileURL, options: .atomic)
+                    UserDefaults.standard.set(fileURL, forKey: "pathForJSON")
+                    UserDefaults.standard.set((( UserDefaults.standard.integer(forKey: "jsonVersion")) + 1), forKey: "jsonVersion")
+                    
+                } catch {
+                    print(error)
+                }
             }
         }
     }
@@ -165,8 +149,8 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
         
         let fileUrl = UserDefaults.standard.url(forKey: "pathForJSON")
         do {
-            if (fileUrl != nil) {
-                let jsonPokemonData = try Data(contentsOf: fileUrl!, options: [])
+            if let url = fileUrl {
+                let jsonPokemonData = try Data(contentsOf: url, options: [])
                 
                 return JSONToArray(from: jsonPokemonData)
             }
@@ -175,32 +159,5 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
         }
         return nil
     }
-    
-    
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
 
 }
