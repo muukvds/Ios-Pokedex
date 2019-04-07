@@ -45,13 +45,11 @@ class CaughtPokemonViewController: UIViewController, UITextFieldDelegate {
         if let pokemon = self.pokemon {
             pokemon.nickname = nicknameTextField.text
             cplvc?.pokemonChanged()
-            
             DispatchQueue.main.async {
                 Toast.show(message: "\(pokemon.name ?? "") got the nickname \(pokemon.nickname ?? "")", controller: self)
             }
         }
     }
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -87,6 +85,7 @@ class CaughtPokemonViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    // functions to close keybloard on return and toutch of keyboard
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.view.endEditing(true)
     }

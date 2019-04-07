@@ -13,7 +13,6 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
     private var pokemons: [Pokemon]? { didSet { tableView.reloadData() }}
     
     private var jsonVersion = UserDefaults.standard.integer(forKey: "jsonVersion")
-
     
     @IBAction func refreshTabel(_ sender: UIBarButtonItem) {
         tableView.reloadData()
@@ -28,13 +27,11 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
         super.awakeFromNib()
         splitViewController?.delegate = self
     }
-
-    // MARK: - Table view data source
     
+    //make sure to show table view in splitcontroller when app starts
     func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController: UIViewController, onto primaryViewController: UIViewController) -> Bool {
         return true
     }
-    
 
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
@@ -72,6 +69,7 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
     }
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        //only get caught pokemons when a new version is avalible
         if jsonVersion < UserDefaults.standard.integer(forKey: "jsonVersion") {
             pokemons = getCoughtPokemons()
             jsonVersion = UserDefaults.standard.integer(forKey: "jsonVersion")
@@ -159,5 +157,4 @@ class CaughtPokemonListTableViewController: UITableViewController, UISplitViewCo
         }
         return nil
     }
-
 }

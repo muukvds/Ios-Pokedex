@@ -8,6 +8,7 @@
 
 import Foundation
 
+//codable to cast directly from json data to pokemon ore pokemon array
 class Pokemon: Codable {
     var localId: String?
     var id: Int
@@ -26,15 +27,6 @@ class Pokemon: Codable {
     var evolvedFrom: Pokemon?
     
     let apiUrl: URL
-    
-    var isLoading = true
-    
-    init(withApiUrl apiUrl: URL) {
-        self.id = 0
-        self.apiUrl = apiUrl
-        self.types = [String]()
-        getPokemonDetails()
-    }
    
     init(withId id: Int, withName name: String, withImageUrl imageUrl: String, withApiUrl apiUrl: URL) {
         self.id = id
@@ -62,8 +54,7 @@ class Pokemon: Codable {
     }
     
     private func fetchPokemonDetails() {
-        
-        isLoading = true
+
         URLSession.shared.dataTask(with: apiUrl, completionHandler: {(data, response, error) in
             
             guard let data = data, error == nil else {print(error!); return}
@@ -93,7 +84,6 @@ class Pokemon: Codable {
                     
                     if let jsonImageUrl = sprites["back_default"] as? String {
                         self.imageUrlBack = jsonImageUrl
-                        //                        self.fetchImage()
                     }
                 }
                 
@@ -134,19 +124,12 @@ class Pokemon: Codable {
                                             self.genera = generaEntry["genus"] as? String
                                         }
                                     }
-                                    
-                                    if let generaEntries = dictionary["genera"] as? [Any] {
-                                        if let generaEntry = generaEntries[2] as? [String: Any] {
-                                            self.genera = generaEntry["genus"] as? String
-                                        }
-                                    }
                                 }
                             }).resume()
                         }
                     }
                 }
             }
-            self.isLoading = false
         }).resume()
     }
         

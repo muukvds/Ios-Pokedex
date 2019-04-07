@@ -8,6 +8,8 @@
 
 import UIKit
 
+//create toast like in android
+
 class Toast {
     static func show(message: String, controller: UIViewController) {
         let toastContainer = UIView(frame: CGRect())
