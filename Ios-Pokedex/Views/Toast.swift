@@ -44,7 +44,7 @@ class Toast {
         controller.view.addConstraints([c1, c2, c3])
         
         UIView.animate(withDuration: 0.5, delay: 0.0, options: .curveEaseIn, animations: {
-            toastContainer.alpha = 0.8
+            toastContainer.alpha = 0.9
         }, completion: { _ in
             UIView.animate(withDuration: 0.5, delay: 1.5, options: .curveEaseOut, animations: {
                 toastContainer.alpha = 0.0
