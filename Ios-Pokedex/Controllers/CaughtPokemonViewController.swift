@@ -8,7 +8,7 @@
 
 import UIKit
 
-class CaughtPokemonViewController: UIViewController {
+class CaughtPokemonViewController: UIViewController, UITextFieldDelegate {
 
     var pokemon: Pokemon?
     var cplvc: CaughtPokemonListTableViewController?
@@ -56,6 +56,8 @@ class CaughtPokemonViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        nicknameTextField.delegate = self
+        
         if let p = pokemon {
             if let image = p.imageFront {
                 pokemonImage.image = UIImage(data: image)
@@ -83,8 +85,18 @@ class CaughtPokemonViewController: UIViewController {
             flavorTextDataLabel.text = p.flavorText
             nicknameTextField.text = p.nickname
         }
-  
-        
     }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.view.endEditing(true)
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
+    
+    
+    
     
 }
